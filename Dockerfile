@@ -3,6 +3,7 @@ FROM alpine:latest
 # 安装依赖
 RUN apk update && apk add --no-cache curl git zsh python3 py3-pip nodejs npm openjdk17
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+RUN chsh -s $(which zsh)
 
 # 配置开发环境
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk
