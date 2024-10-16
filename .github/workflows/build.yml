@@ -76,6 +76,7 @@ jobs:
             --tag maojiaxing/vscode-cli:latest \
             --tag maojiaxing/vscode-cli:${{ needs.check-version.outputs.new-version }} \
             --build-arg VSCODE_CLI_PLATFORM=${{ env.ARCH }} \
+            --build-arg VSCODE_CLI_VERSION=${{ needs.check-version.outputs.new-version }} \
             --file ./Dockerfile \
             --push .
 
