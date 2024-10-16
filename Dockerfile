@@ -24,5 +24,6 @@ WORKDIR /workspace
 
 ENTRYPOINT ["code"]
 
+CMD ["serve-web"]
 
 
