@@ -13,7 +13,7 @@ ENV PATH="$JAVA_HOME/bin:${PATH}"
 
 # 下载并安装 VS Code CLI
 ARG VSCODE_CLI_VERSION
-RUN curl -L https://github.com/microsoft/vscode/releases/download/${VSCODE_CLI_VERSION}/vscode-cli-alpine-x64.tar.gz -o /tmp/vscode-cli.tar.gz && \
+RUN curl -L https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64 -o /tmp/vscode-cli.tar.gz && \
     tar -xzf /tmp/vscode-cli.tar.gz -C /usr/local/bin && \
     rm /tmp/vscode-cli.tar.gz
 
