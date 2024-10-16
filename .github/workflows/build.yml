@@ -120,13 +120,13 @@ jobs:
         run: |
           docker manifest create \
             maojiaxing/vscode-cli:${{ env.NEW_VERSION }} \
-            --amend maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} \
-            --amend maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }}
+            maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} \
+            maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }}
             
           docker manifest create \
             maojiaxing/vscode-cli:latest \
-            --amend maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} \
-            --amend maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }}
+            maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} \
+            maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }}
 
           docker manifest push maojiaxing/vscode-cli:latest
           docker manifest push maojiaxing/vscode-cli:${{ env.NEW_VERSION }}
