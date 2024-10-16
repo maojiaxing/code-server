@@ -58,6 +58,8 @@ jobs:
       - name: Load environment variables
         run: |
           set -o allexport; source version.env; set +o allexport
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "LAST_BUILT_VERSION=$LAST_BUILT_VERSION" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
