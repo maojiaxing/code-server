@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM --platform=$TARGETPLATFORM alpine:latest AS base
 
 # 安装依赖
 RUN apk update && apk add --no-cache curl python3 py3-pip nodejs npm openjdk17
