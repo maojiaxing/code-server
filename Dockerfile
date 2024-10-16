@@ -1,4 +1,4 @@
-FROM alpine:latest
+FROM alpine:edge
 
 # 安装依赖
 RUN apk update && apk add --no-cache curl git zsh python3 py3-pip nodejs npm openjdk17 neovim
