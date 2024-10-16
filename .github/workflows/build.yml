@@ -40,17 +40,25 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
+          
       - name: Build Docker image
         id: build
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/${{ matrix.platform }}
-          push: true 
-          tags: maojiaxing/vscode-cli:latest,maojiaxing/vscode-cli:${{ needs.check-version.outputs.new-version }}
-          build-args: |
-            VSCODE_CLI_VERSION=${{ needs.check-version.outputs.new-version }}
+        run: |
+          docker buildx build \
+            --platform linux/${{ matrix.platform }} \
+            --tag your-dockerhub-username/vscode-cli:latest \
+            --tag your-dockerhub-username/vscode-cli:${{ needs.check-version.outputs.new-version }} \
+            --build-arg VSCODE_CLI_PLATFORM=${{ matrix.platform }} \
+            --file ./Dockerfile \
+            --output type=docker,dest=/tmp/image.tar .
+          echo "image=/tmp/image.tar" >> $GITHUB_ENV
+          
+      - name: Push Docker image
+        id: push
+        run: |
+          docker load --input ${{ env.image }}
+          docker push your-dockerhub-username/vscode-cli:latest
+          docker push your-dockerhub-username/vscode-cli:${{ needs.check-version.outputs.new-version }}
+
 
   
