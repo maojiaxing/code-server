@@ -77,7 +77,7 @@ jobs:
           
       - name: Build and push Docker image
         id: build-docker-image
-        if: ${{ env.SKIP_BUILD == 'false' }}
+        if: ${{ env.NEW_VERSION }} != env.LAST_BUILT_VERSION }}
         run: |
           docker buildx build \
             --platform linux/${{ matrix.platform }} \
@@ -89,7 +89,7 @@ jobs:
             
       - name: Create and push Docker manifest
         id: build-and-push-manifest
-        if: ${{ env.SKIP_BUILD == 'false' }}
+        if: ${{ env.NEW_VERSION }} != env.LAST_BUILT_VERSION }}
         run: |
           docker manifest create \
             maojiaxing/vscode-cli:${{ env.NEW_VERSION }} \
@@ -115,7 +115,7 @@ jobs:
         
       - name: Update version in repository
         id: record-build-version
-        if: ${{ env.SKIP_BUILD == 'false' }}
+        if: ${{ env.NEW_VERSION }} != env.LAST_BUILT_VERSION }}
         run: |
           echo "${{ env.NEW_VERSION }}" > version.txt
           git config --global user.email "maojiaxing.tech@gmail.com"            
