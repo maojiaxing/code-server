@@ -23,7 +23,7 @@ jobs:
     if: needs.check-version.outputs.new-version != '${{ github.event.inputs.current_version }}'
     strategy:
       matrix:
-        platform: [linux/amd64, linux/arm64]
+        platform: [x64, arm64]
 
     steps:
       - name: Checkout repository
