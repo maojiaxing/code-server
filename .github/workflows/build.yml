@@ -64,8 +64,8 @@ jobs:
         run: |
           docker buildx build \
             --platform linux/${{ matrix.platform }} \
-            --tag your-dockerhub-username/vscode-cli:latest \
-            --tag your-dockerhub-username/vscode-cli:${{ env.new-version }} \
+            --tag ${{secrets.DOCKER_USERNAME}}/vscode-cli:latest \
+            --tag ${{secrets.DOCKER_USERNAME}}/vscode-cli:${{ env.new-version }} \
             --build-arg VSCODE_CLI_PLATFORM=${{ matrix.platform }} \
             --file ./Dockerfile \
             --push .
