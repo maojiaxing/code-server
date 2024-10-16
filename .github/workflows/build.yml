@@ -1,0 +1,21 @@
+name: Build and Push VS Code CLI Docker Image
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天午夜触发
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      new-version: ${{ steps.check-version.outputs.new-version }}
+    steps:
+      - name: Check VS Code CLI version
+        id: check-version
+        run: |
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/microsoft/vscode/releases/latest) NEW_VERSION=$(echo $LATEST_RELEASE | jq -r '.tag_name')
+          echo "New VS Code CLI version: $NEW_VERSION"
+          echo "::set-output name=new-version::$NEW_VERSION"
+
+  
