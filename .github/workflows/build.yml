@@ -113,6 +113,23 @@ jobs:
         with:
           username: maojiaxing
           password: ${{ secrets.DOCKER_PASSWORD }}
+          
+      - name: Inspect existing manifest
+        id: inspect-manifest
+        run: |
+          # 获取现有 manifest 的详细信息
+          docker manifest inspect maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} > amd64-manifest.json
+          docker manifest inspect maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }} > arm64-manifest.json
+
+      - name: Extract manifest digests
+        id: extract-digest
+        run: |
+          # 提取 amd64 和 arm64 的 digest
+          AMD64_DIGEST=$(jq -r '.manifests[] | select(.platform.architecture=="amd64") | .digest' amd64-manifest.json)
+          ARM64_DIGEST=$(jq -r '.manifests[] | select(.platform.architecture=="arm64") | .digest' arm64-manifest.json)
+          
+          echo "AMD64_DIGEST=$AMD64_DIGEST" >> $GITHUB_ENV
+          echo "ARM64_DIGEST=$ARM64_DIGEST" >> $GITHUB_ENV
                
       - name: Create and push Docker manifest
         id: build-and-push-manifest
@@ -120,13 +137,13 @@ jobs:
         run: |
           docker manifest create \
             maojiaxing/vscode-cli:${{ env.NEW_VERSION }} \
-            --amend maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} \
-            --amend maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }}
+            --amend maojiaxing/vscode-cli@${{ env.AMD64_DIGEST }} \
+            --amend maojiaxing/vscode-cli@${{ env.AMD64_DIGEST }}
             
           docker manifest create \
             maojiaxing/vscode-cli:latest \
-            --amend maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} \
-            --amend maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }}
+            --amend maojiaxing/vscode-cli@${{ env.AMD64_DIGEST }} \
+            --amend maojiaxing/vscode-cli@${{ env.AMD64_DIGEST }}
 
           docker manifest push maojiaxing/vscode-cli:latest
           docker manifest push maojiaxing/vscode-cli:${{ env.NEW_VERSION }}
