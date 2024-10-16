@@ -39,7 +39,7 @@ jobs:
           name: version-file
           path: version.env  # 上传环境文件
 
-  build-and-push:
+  build-image:
     runs-on: ubuntu-latest
     needs: check-version
     strategy:
@@ -83,7 +83,6 @@ jobs:
           fi
           
       - name: Build and push Docker image
-        id: build-docker-image
         if: ${{ env.NEW_VERSION }} != env.LAST_BUILT_VERSION }}
         run: |
           docker buildx build \
@@ -92,33 +91,58 @@ jobs:
             --build-arg VSCODE_CLI_PLATFORM=${{ env.ARCH }} \
             --build-arg VSCODE_CLI_VERSION=${{ env.NEW_VERSION }} \
             --file ./Dockerfile \
-            --output type=docker .
-            
+            --push .
+                   
+  push-image:
+    runs-on: ubuntu-latest
+    needs: build-image
+    steps:
+      - name: Download environment file
+        uses: actions/download-artifact@v4
+        with:
+          name: version-file  # 下载上传的环境文件
+          
+      - name: Load environment variables
+        run: |
+          set -o allexport; source version.env; set +o allexport
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "LAST_BUILT_VERSION=$LAST_BUILT_VERSION" >> $GITHUB_ENV
+          
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: maojiaxing
+          password: ${{ secrets.DOCKER_PASSWORD }}
+               
       - name: Create and push Docker manifest
         id: build-and-push-manifest
         if: ${{ env.NEW_VERSION }} != env.LAST_BUILT_VERSION }}
         run: |
           docker manifest create \
             maojiaxing/vscode-cli:${{ env.NEW_VERSION }} \
-            maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} \
-            maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }}
+            --amend maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} \
+            --amend maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }}
             
           docker manifest create \
             maojiaxing/vscode-cli:latest \
-            maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} \
-            maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }}
+            --amend maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} \
+            --amend maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }}
 
           docker manifest push maojiaxing/vscode-cli:latest
           docker manifest push maojiaxing/vscode-cli:${{ env.NEW_VERSION }}
-           
-
+    
   record-build-version:
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: push-image
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Download environment file
+        uses: actions/download-artifact@v4
+        with:
+          name: version-file  # 下载上传的环境文件
 
       - name: Load environment variables
         run: |
