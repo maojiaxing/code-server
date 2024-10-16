@@ -45,6 +45,8 @@ jobs:
     strategy:
       matrix:
         platform: [amd64, arm64]
+    outputs:
+      new-version: ${{ steps.check-version.outputs.new-version }}
 
     steps:
       - name: Checkout repository
@@ -72,7 +74,7 @@ jobs:
           fi
           
       - name: Build and push Docker image
-        id: build-and-push
+        id: build-docker-image
         run: |
           docker buildx build \
             --platform linux/${{ matrix.platform }} \
@@ -83,6 +85,7 @@ jobs:
             --output type=docker .
             
       - name: Create and push Docker manifest
+        id: build-and-push-manifest
         run: |
           docker manifest create \
             maojiaxing/vscode-cli:${{ needs.check-version.outputs.new-version }} \
@@ -96,6 +99,7 @@ jobs:
 
           docker manifest push maojiaxing/vscode-cli:latest
           docker manifest push maojiaxing/vscode-cli:${{ needs.check-version.outputs.new-version }}
+           
 
   record-build-version:
     runs-on: ubuntu-latest
