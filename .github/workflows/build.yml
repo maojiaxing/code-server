@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Check VS Code CLI newest version
         id: check-version
@@ -21,7 +21,7 @@ jobs:
           LATEST_RELEASE=$(curl -s https://api.github.com/repos/microsoft/vscode/releases/latest)
           NEW_VERSION=$(echo $LATEST_RELEASE | jq -r '.tag_name')
           echo "New VS Code CLI version: $NEW_VERSION"
-          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "NEW_VERSION=$NEW_VERSION" >> version.env
 
       - name: Read last built version
         id: read-last-version
@@ -31,17 +31,7 @@ jobs:
           else
             LAST_BUILT_VERSION="none"
           fi
-          echo "LAST_BUILT_VERSION=$LAST_BUILT_VERSION" >> $GITHUB_ENV
-
-      - name: Determine if build is necessary
-        id: determine-build
-        run: |
-          if [ "${{ env.NEW_VERSION }}" = "${{ env.LAST_BUILT_VERSION }}" ]; then
-            echo "Skipping build; versions match."
-            echo "SKIP_BUILD=true" >> $GITHUB_ENV  # 设置跳过构建的标志
-          else
-            echo "SKIP_BUILD=false" >> $GITHUB_ENV  # 需要构建
-          fi
+          echo "LAST_BUILT_VERSION=$LAST_BUILT_VERSION" >> version.env
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -52,7 +42,11 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Load environment variables
+        run: |
+          set -o allexport; source version.env; set +o allexport
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -111,7 +105,11 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Load environment variables
+        run: |
+          set -o allexport; source version.env; set +o allexport
         
       - name: Update version in repository
         id: record-build-version
