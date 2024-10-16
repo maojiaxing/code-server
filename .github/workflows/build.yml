@@ -76,12 +76,26 @@ jobs:
         run: |
           docker buildx build \
             --platform linux/${{ matrix.platform }} \
-            --tag maojiaxing/vscode-cli:latest \
-            --tag maojiaxing/vscode-cli:${{ needs.check-version.outputs.new-version }} \
+            --tag maojiaxing/vscode-cli:${{ matrix.platform }}-${{ needs.check-version.outputs.new-version }} \
             --build-arg VSCODE_CLI_PLATFORM=${{ env.ARCH }} \
             --build-arg VSCODE_CLI_VERSION=${{ needs.check-version.outputs.new-version }} \
             --file ./Dockerfile \
-            --push .
+            --output type=docker .
+            
+      - name: Create and push Docker manifest
+        run: |
+          docker manifest create \
+            maojiaxing/vscode-cli:${{ needs.check-version.outputs.new-version }} \
+            maojiaxing/vscode-cli:amd64-${{ needs.check-version.outputs.new-version }} \
+            maojiaxing/vscode-cli:arm64-${{ needs.check-version.outputs.new-version }}
+            
+          docker manifest create \
+            maojiaxing/vscode-cli:latest \
+            maojiaxing/vscode-cli:amd64-${{ needs.check-version.outputs.new-version }} \
+            maojiaxing/vscode-cli:arm64-${{ needs.check-version.outputs.new-version }}
+
+          docker manifest push maojiaxing/vscode-cli:latest
+          docker manifest push maojiaxing/vscode-cli:${{ needs.check-version.outputs.new-version }}
 
   record-build-version:
     runs-on: ubuntu-latest
