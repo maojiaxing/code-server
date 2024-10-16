@@ -169,7 +169,7 @@ jobs:
         id: record-build-version
         if: ${{ env.NEW_VERSION }} != env.LAST_BUILT_VERSION }}
         run: |
-          echo "${{ env.NEW_VERSION }}" > version.txt
+          echo "$NEW_VERSION" > version.txt
           git config --global user.email "maojiaxing.tech@gmail.com"            
           git config --global user.name "GitHub Actions"
           git add version.txt
