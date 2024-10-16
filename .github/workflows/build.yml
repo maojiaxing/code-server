@@ -47,9 +47,8 @@ jobs:
           file: ./Dockerfile
           platforms: ${{ matrix.platform }}
           push: true 
-          tags: your-dockerhub-username/your-image:latest,your-dockerhub-username/your-image:${{ github.run_number }}
+          tags: maojiaxing/vscode-cli:latest,maojiaxing/vscode-cli:${{ needs.check-version.outputs.new-version }}
           build-args: |
-            VSCODE_CLI_VERSION=${{ github.event.release.tag_name }
-    
+            VSCODE_CLI_VERSION=${{ needs.check-version.outputs.new-version }}
 
   
