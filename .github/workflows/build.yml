@@ -41,7 +41,7 @@ jobs:
     if: ${{ needs.check-version.outputs.new-version != needs.check-version.outputs.last-built-version }}
     strategy:
       matrix:
-        platform: [x64, arm64]
+        platform: [amd64, arm64]
 
     steps:
       - name: Checkout repository
@@ -59,6 +59,15 @@ jobs:
           username: maojiaxing
           password: ${{ secrets.DOCKER_PASSWORD }}
           
+      - name: Set architecture variable
+        id: set-arch
+        run: |
+          if [ "${{ matrix.platform }}" == "amd64" ]; then
+            echo "ARCH=x64" >> $GITHUB_ENV  # 将 amd64 映射到 x64
+          else
+            echo "ARCH=${{ matrix.platform }}" >> $GITHUB_ENV  # arm64 保持不变
+          fi
+          
       - name: Build and push Docker image
         id: build-and-push
         run: |
@@ -66,7 +75,7 @@ jobs:
             --platform linux/${{ matrix.platform }} \
             --tag maojiaxing/vscode-cli:latest \
             --tag maojiaxing/vscode-cli:${{ needs.check-version.outputs.new-version }} \
-            --build-arg VSCODE_CLI_PLATFORM=${{ matrix.platform }} \
+            --build-arg VSCODE_CLI_PLATFORM=${{ env.ARCH }} \
             --file ./Dockerfile \
             --push .
 
