@@ -1,7 +1,7 @@
 FROM --platform=$TARGETPLATFORM alpine:latest AS base
 
 # 安装依赖
-RUN apk update && apk add --no-cache curl zsh python3 py3-pip nodejs npm openjdk17
+RUN apk update && apk add --no-cache curl git zsh python3 py3-pip nodejs npm openjdk17
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 # 配置开发环境
