@@ -32,6 +32,12 @@ jobs:
             LAST_BUILT_VERSION="none"
           fi
           echo "LAST_BUILT_VERSION=$LAST_BUILT_VERSION" >> version.env
+          
+      - name: Upload environment file
+        uses: actions/upload-artifact@v2
+        with:
+          name: version-file
+          path: version.env  # 上传环境文件
 
   build-and-push:
     runs-on: ubuntu-latest
@@ -43,6 +49,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Download environment file
+        uses: actions/download-artifact@v2
+        with:
+          name: version-file  # 下载上传的环境文件
 
       - name: Load environment variables
         run: |
