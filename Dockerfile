@@ -7,8 +7,8 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 # 配置开发环境
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk
 ENV PATH="$JAVA_HOME/bin:${PATH}"
-RUN ln -s /usr/bin/python3 /usr/bin/python
-RUN ln -s /usr/bin/pip3 /usr/bin/pip
+# RUN ln -s /usr/bin/python3 /usr/bin/python
+# RUN ln -s /usr/bin/pip3 /usr/bin/pip
 
 
 # 下载并安装 VS Code CLI
