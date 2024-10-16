@@ -33,7 +33,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     needs: check-version
-    if: ${{ env.new-version != env.last-built-version }}  # 判断版本号是否不同
+    if: ${{ env.new-version }} != {{ env.last-built-version }}
     strategy:
       matrix:
         platform: [x64, arm64]
