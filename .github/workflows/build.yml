@@ -11,9 +11,6 @@ permissions:
 jobs:
   check-version:
     runs-on: ubuntu-latest
-    outputs:
-      new-version: ${{ steps.check-version.outputs.new-version }}
-      last-built-version: ${{ steps.read-last-version.outputs.last-built-version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -24,8 +21,7 @@ jobs:
           LATEST_RELEASE=$(curl -s https://api.github.com/repos/microsoft/vscode/releases/latest)
           NEW_VERSION=$(echo $LATEST_RELEASE | jq -r '.tag_name')
           echo "New VS Code CLI version: $NEW_VERSION"
-          echo "new-version=$NEW_VERSION" >> $GITHUB_ENV
-          echo "::set-output name=new-version::$NEW_VERSION"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
       - name: Read last built version
         id: read-last-version
@@ -35,18 +31,24 @@ jobs:
           else
             LAST_BUILT_VERSION="none"
           fi
-          echo "last-built-version=$LAST_BUILT_VERSION" >> $GITHUB_ENV
-          echo "::set-output name=last-built-version::$LAST_BUILT_VERSION"
+          echo "LAST_BUILT_VERSION=$LAST_BUILT_VERSION" >> $GITHUB_ENV
+
+      - name: Determine if build is necessary
+        id: determine-build
+        run: |
+          if [ "${{ env.NEW_VERSION }}" = "${{ env.LAST_BUILT_VERSION }}" ]; then
+            echo "Skipping build; versions match."
+            echo "SKIP_BUILD=true" >> $GITHUB_ENV  # 设置跳过构建的标志
+          else
+            echo "SKIP_BUILD=false" >> $GITHUB_ENV  # 需要构建
+          fi
 
   build-and-push:
     runs-on: ubuntu-latest
     needs: check-version
-    if: ${{ needs.check-version.outputs.new-version != needs.check-version.outputs.last-built-version }}
     strategy:
       matrix:
         platform: [amd64, arm64]
-    outputs:
-      new-version: ${{ steps.check-version.outputs.new-version }}
 
     steps:
       - name: Checkout repository
@@ -75,30 +77,32 @@ jobs:
           
       - name: Build and push Docker image
         id: build-docker-image
+        if: ${{ env.SKIP_BUILD == 'false' }}
         run: |
           docker buildx build \
             --platform linux/${{ matrix.platform }} \
-            --tag maojiaxing/vscode-cli:${{ matrix.platform }}-${{ needs.check-version.outputs.new-version }} \
+            --tag maojiaxing/vscode-cli:${{ matrix.platform }}-${{ env.NEW_VERSION }} \
             --build-arg VSCODE_CLI_PLATFORM=${{ env.ARCH }} \
-            --build-arg VSCODE_CLI_VERSION=${{ needs.check-version.outputs.new-version }} \
+            --build-arg VSCODE_CLI_VERSION=${{ env.NEW_VERSION }} \
             --file ./Dockerfile \
             --output type=docker .
             
       - name: Create and push Docker manifest
         id: build-and-push-manifest
+        if: ${{ env.SKIP_BUILD == 'false' }}
         run: |
           docker manifest create \
-            maojiaxing/vscode-cli:${{ needs.check-version.outputs.new-version }} \
-            maojiaxing/vscode-cli:amd64-${{ needs.check-version.outputs.new-version }} \
-            maojiaxing/vscode-cli:arm64-${{ needs.check-version.outputs.new-version }}
+            maojiaxing/vscode-cli:${{ env.NEW_VERSION }} \
+            maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} \
+            maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }}
             
           docker manifest create \
             maojiaxing/vscode-cli:latest \
-            maojiaxing/vscode-cli:amd64-${{ needs.check-version.outputs.new-version }} \
-            maojiaxing/vscode-cli:arm64-${{ needs.check-version.outputs.new-version }}
+            maojiaxing/vscode-cli:amd64-${{ env.NEW_VERSION }} \
+            maojiaxing/vscode-cli:arm64-${{ env.NEW_VERSION }}
 
           docker manifest push maojiaxing/vscode-cli:latest
-          docker manifest push maojiaxing/vscode-cli:${{ needs.check-version.outputs.new-version }}
+          docker manifest push maojiaxing/vscode-cli:${{ env.NEW_VERSION }}
            
 
   record-build-version:
@@ -111,10 +115,11 @@ jobs:
         
       - name: Update version in repository
         id: record-build-version
+        if: ${{ env.SKIP_BUILD == 'false' }}
         run: |
-          echo "${{ needs.check-version.outputs.new-version }}" > version.txt
+          echo "${{ env.NEW_VERSION }}" > version.txt
           git config --global user.email "maojiaxing.tech@gmail.com"            
           git config --global user.name "GitHub Actions"
           git add version.txt
-          git commit -m "Update version to ${{ needs.check-version.outputs.new-version }}"
+          git commit -m "Update version to ${{ env.NEW_VERSION }}"
           git push
