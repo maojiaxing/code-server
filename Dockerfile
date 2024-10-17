@@ -3,7 +3,8 @@ FROM alpine:edge
 # 安装依赖
 RUN apk update && apk add --no-cache curl git zsh python3 py3-pip nodejs npm openjdk17 neovim
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-RUN sed -i -e "s/bin\/ash/bin\/zsh/" /etc/passwd
+
+COPY ./etc/passwd /etc/passwd
 
 # 配置开发环境
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk
@@ -24,6 +25,8 @@ RUN curl -sL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alp
 WORKDIR /workspace
 
 ENTRYPOINT ["code"]
+
+EXPOSE 8000
 
 CMD ["serve-web"]
 
