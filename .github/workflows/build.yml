@@ -20,8 +20,10 @@ jobs:
         run: |
           LATEST_RELEASE=$(curl -s https://api.github.com/repos/microsoft/vscode/releases/latest)
           NEW_VERSION=$(echo $LATEST_RELEASE | jq -r '.tag_name')
-          echo "New VS Code CLI version: $NEW_VERSION"
+          NEW_TARBALL_URL=$(echo $LAST_RELEASE | jq -r '.tarball_url')  
+          echo "Newest VS Code CLI version: $NEW_VERSION, source url: $NEW_TARBALL_URL"
           echo "NEW_VERSION=$NEW_VERSION" >> version.env
+          echo "NEW_TARBALL_URL=$NEW_TARBALL_URL" >> version.env
 
       - name: Read last built version
         id: read-last-version
@@ -60,6 +62,7 @@ jobs:
           set -o allexport; source version.env; set +o allexport
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
           echo "LAST_BUILT_VERSION=$LAST_BUILT_VERSION" >> $GITHUB_ENV
+          echo "NEW_TARBALL_URL=$NEW_TARBALL_URL" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -74,13 +77,16 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           
       - name: Set architecture variable
-        id: set-arch
         run: |
           if [ "${{ matrix.platform }}" == "amd64" ]; then
             echo "ARCH=x64" >> $GITHUB_ENV  # 将 amd64 映射到 x64
           else
             echo "ARCH=${{ matrix.platform }}" >> $GITHUB_ENV  # arm64 保持不变
           fi
+
+      # - name: Build vscode
+      #   run: |
+          
           
       - name: Build and push Docker image
         if: ${{ env.NEW_VERSION }} != env.LAST_BUILT_VERSION }}
