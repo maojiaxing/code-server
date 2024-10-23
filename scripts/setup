@@ -1,1 +1,102 @@
+#!/bin/sh
 
+# 获取仓库信息 (所有者, 仓库名称, 最新版本)
+get_repo_info() {
+  repo_url="$1"
+
+  # 使用 POSIX 兼容的正则匹配 GitHub 仓库 URL
+  case "$repo_url" in
+    https://github.com/*/*)
+      owner=$(echo "$repo_url" | cut -d'/' -f4)  # 所有者
+      repo=$(echo "$repo_url" | cut -d'/' -f5 | sed 's/.git$//')  # 仓库名称
+      ;;
+    *)
+      echo "Error: Invalid GitHub repository URL."
+      return 1
+      ;;
+  esac
+
+  # 获取最新发布版本
+  latest_release=$(curl -s "https://api.github.com/repos/$owner/$repo/releases/latest" | \
+                   grep -o '"tag_name": "[^"]*' | \
+                   grep -o '[^"]*$')
+
+  if [ -z "$latest_release" ]; then
+    echo "Error: Unable to fetch the latest release."
+    return 1
+  fi                
+
+  # 输出结果
+  echo "$owner $repo $latest_release"
+}
+
+# 克隆仓库并切换到指定标签
+clone_repo() {
+  repo_url="$1"
+  base_dir="$2"
+  dist_dir="${3:-}"
+
+  # 获取仓库信息
+  repo_info=$(get_repo_info "$repo_url")
+  set -- $repo_info  # 拆分 repo_info 输出
+  repo_name="$2"
+  latest_release="$3"
+
+  if [ -z "$dist_dir" ]; then
+    dist_dir="$repo_name"
+  fi
+
+  dist_dir="$base_dir/$dist_dir"
+  original_dir=$(pwd)
+
+  # 克隆仓库
+  git clone "$repo_url" "$dist_dir"
+  cd "$dist_dir" || return 1
+  
+  # 如果指定了标签，切换到该标签
+  if [ -n "$latest_release" ]; then
+    git checkout "tags/$latest_release" -b "$latest_release"
+  fi
+
+  cd "$original_dir" || return 1
+}
+
+# 获取 Neovim 的数据路径
+data_path=$(nvim --headless -c "echo stdpath('data')" -c "quit" 2>&1)
+
+# 安装 Neovim 插件
+clone_repo "https://github.com/folke/flash.nvim.git" "$data_path"
+clone_repo "https://github.com/echasnovski/mini.nvim.git" "$data_path"
+
+# 安装 asdf
+git clone https://github.com/asdf-vm/asdf.git root/.asdf
+chmd u+x /root/.asdf/asdf.sh
+
+# 添加 asdf 配置到 ~/.zshrc
+line='. "$HOME/.asdf/asdf.sh"'
+if ! grep -qF "$line" "$HOME/.zshrc"; then
+  echo "$line" >> "$HOME/.zshrc"
+  echo "Added to ~/.zshrc: $line"
+else
+  echo "Line already exists in ~/.zshrc"
+fi
+
+source "$HOME/.zshrc"
+
+# 安装 Java 多个版本
+asdf plugin-add java https://github.com/halcyon/asdf-java.git
+asdf install java openjdk-8
+asdf install java openjdk-11
+asdf install java openjdk-17
+asdf install java openjdk-21
+
+
+# 安装最新版本的 Python
+asdf plugin-add python
+
+
+# 安装最新版本的 Node.js
+add_asdf_plugin "nodejs" "$(asdf list-all nodejs | tail -n 1)"
+
+# 安装最新版本的 Rust
+add_asdf_plugin "rust" "$(asdf list-all rust | tail -n 1)"

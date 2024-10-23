@@ -19,6 +19,7 @@ RUN curl -sL "https://code.visualstudio.com/sha/download?build=stable&os=cli-alp
 
     
 COPY ./etc/passwd /etc/passwd
+RUN ./script/setup
 
 # 设置工作目录
 WORKDIR /workspace
